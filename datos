@@ -1,0 +1,47 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+from sklearn.metrics import mean_squared_error
+
+def plot_history_predictions(history, Xtrain, Ytrain, Xtest, Ytest, scaler, model, title, xlabel, ylabel, look_back):
+    # Resumen del historial de pérdida
+    plt.figure(figsize=(20, 5))
+    plt.plot(history.history['loss'], color='blue')
+    plt.plot(history.history['val_loss'], color='red')
+    plt.title('Model loss', fontsize=20)
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['Training', 'Validation'], loc='upper right', fontsize=14)
+    plt.show()
+
+    # Realiza las predicciones
+    trainPredict = model.predict(Xtrain)
+    testPredict = model.predict(Xtest)
+
+    # Invierte las predicciones
+    if len(trainPredict.shape) == 3:
+        trainPredict = trainPredict[:, -1, :]
+        testPredict = testPredict[:, -1, :]
+    trainPredict = scaler.inverse_transform(trainPredict)
+    trainYTrue = scaler.inverse_transform(Ytrain.reshape(-1, 1))
+    testPredict = scaler.inverse_transform(testPredict)
+    testYTrue = scaler.inverse_transform(Ytest.reshape(-1, 1))
+
+    # Calcula el error cuadrático medio raíz (RMSE)
+    trainScore = math.sqrt(mean_squared_error(trainYTrue[:, 0], trainPredict[:, 0]))
+    print('Training: %.2f RMSE' % (trainScore))
+    testScore = math.sqrt(mean_squared_error(testYTrue[:, 0], testPredict[:, 0]))
+    print('Test: %.2f RMSE' % (testScore))
+
+    # Gráfica de predicciones
+    plt.figure(figsize=[10, 5])
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.grid(True)
+    plt.plot(range(len(Ytrain) + len(Ytest)), np.concatenate([Ytrain, Ytest]), 'k.')
+    plt.plot(range(look_back, len(trainPredict) + look_back), trainPredict, 'b')
+    plt.plot(range(len(trainPredict) + 2 * look_back, len(trainPredict) + len(testPredict) + 2 * look_back), testPredict, 'r')
+    plt.legend(['Original', 'Training', 'Test'])
+
+# Asegúrate de definir las variables y objetos necesarios antes de llamar a esta función.
